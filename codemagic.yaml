@@ -1,0 +1,48 @@
+workflows:
+  default-workflow:
+    name: BrainSpectrum Workflow
+    max_build_duration: 60
+    environment:
+      vars:
+        APP_STORE_CONNECT_ISSUER_ID: 6c07076c-aac2-4830-b38a-0be127e029dd
+        APP_STORE_CONNECT_KEY_IDENTIFIER: 5B3RGV345J
+        APP_STORE_CONNECT_PRIVATE_KEY: Encrypted(Z0FBQUFB...)
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - flutter clean
+      - flutter pub get
+      - flutter doctor -v
+      - |
+        # Update Podfile to force iOS 13.0 deployment target
+        podfile_path="ios/Podfile"
+        if [ -f "$podfile_path" ]; then
+          sed -i '' '/platform :ios/d' "$podfile_path" || true
+          echo "platform :ios, '13.0'" | cat - "$podfile_path" > temp && mv temp "$podfile_path"
+        else
+          echo "platform :ios, '13.0'" > "$podfile_path"
+        fi
+      - |
+        # Ensure Pods are correctly installed
+        cd ios
+        pod deintegrate
+        pod cache clean --all
+        pod repo update
+        pod install
+        cd ..
+      - keychain initialize
+      - app-store-connect fetch-signing-files "com.raylyu.brainspectrum" --type IOS_APP_STORE --create
+      - keychain add-certificates
+      - xcode-project use-profiles
+      - flutter build ipa --release --no-codesign --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: 5B3RGV345J
+        issuer_id: 6c07076c-aac2-4830-b38a-0be127e029dd
+        submit_to_testflight: true
