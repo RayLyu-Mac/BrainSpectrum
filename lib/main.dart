@@ -2,19 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'pages/landing_page.dart';
 import 'utils/language_controller.dart';
-import 'utils/notification_service.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService.instance.init();
-  await NotificationService.instance.scheduleDailyNotification();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => LanguageController(),
-      child: const MyApp(),
-    ),
-  );
+    // Add debug print to track initialization
+    debugPrint('App initialization starting...');
+
+    runApp(
+      ChangeNotifierProvider(
+        create: (_) => LanguageController(),
+        child: const MyApp(),
+      ),
+    );
+
+    debugPrint('App initialization complete');
+  } catch (e, stackTrace) {
+    debugPrint('Error during app initialization: $e');
+    debugPrint('Stack trace: $stackTrace');
+    // Rethrow to ensure we don't silently fail
+    rethrow;
+  }
 }
 
 class MyApp extends StatelessWidget {
