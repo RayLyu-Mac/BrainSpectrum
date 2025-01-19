@@ -38,15 +38,29 @@ class GameScore {
 }
 
 class DatabaseHelper {
-  static final DatabaseHelper instance = DatabaseHelper._init();
+  static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
+  bool _isStorageAvailable = true;
 
-  DatabaseHelper._init();
+  factory DatabaseHelper() {
+    return _instance;
+  }
 
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDB('game_scores.db');
-    return _database!;
+  DatabaseHelper._internal();
+
+  Future<Database?> get database async {
+    if (!_isStorageAvailable) return null;
+
+    if (_database != null) return _database;
+
+    try {
+      _database = await _initDB('game_scores.db');
+      return _database;
+    } catch (e) {
+      print('Storage initialization error: $e');
+      _isStorageAvailable = false;
+      return null;
+    }
   }
 
   Future<Database> _initDB(String filePath) async {
@@ -72,35 +86,68 @@ class DatabaseHelper {
     ''');
   }
 
-  Future<void> insertScore(GameScore score) async {
-    final db = await database;
-    await db.insert('scores', score.toMap());
+  Future<bool> insertScore(GameScore score) async {
+    if (!_isStorageAvailable) return false;
+
+    try {
+      final db = await database;
+      if (db == null) return false;
+
+      await db.insert('scores', score.toMap());
+      return true;
+    } catch (e) {
+      print('Storage operation error: $e');
+      _isStorageAvailable = false;
+      return false;
+    }
   }
 
   Future<int> getTopScore(int difficulty, int duration) async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'scores',
-      where: 'difficulty = ? AND duration = ?',
-      whereArgs: [difficulty, duration],
-      orderBy: 'score DESC',
-      limit: 1,
-    );
+    if (!_isStorageAvailable) return 0;
 
-    if (maps.isEmpty) {
+    try {
+      final db = await database;
+      if (db == null) return 0;
+
+      final List<Map<String, dynamic>> maps = await db.query(
+        'scores',
+        where: 'difficulty = ? AND duration = ?',
+        whereArgs: [difficulty, duration],
+        orderBy: 'score DESC',
+        limit: 1,
+      );
+
+      if (maps.isEmpty) {
+        return 0;
+      }
+
+      return maps.first['score'];
+    } catch (e) {
+      print('Storage query error: $e');
+      _isStorageAvailable = false;
       return 0;
     }
-
-    return maps.first['score'];
   }
 
   Future<List<GameScore>> getAllScores() async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'scores',
-      orderBy: 'timestamp DESC',
-    );
+    if (!_isStorageAvailable) return [];
 
-    return List.generate(maps.length, (i) => GameScore.fromMap(maps[i]));
+    try {
+      final db = await database;
+      if (db == null) return [];
+
+      final List<Map<String, dynamic>> maps = await db.query(
+        'scores',
+        orderBy: 'timestamp DESC',
+      );
+
+      return List.generate(maps.length, (i) => GameScore.fromMap(maps[i]));
+    } catch (e) {
+      print('Storage query error: $e');
+      _isStorageAvailable = false;
+      return [];
+    }
   }
+
+  bool get isStorageAvailable => _isStorageAvailable;
 }

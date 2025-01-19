@@ -36,7 +36,7 @@ class HistoryPage extends StatelessWidget {
         ),
       ),
       body: FutureBuilder<List<GameScore>>(
-        future: DatabaseHelper.instance.getAllScores(),
+        future: DatabaseHelper().getAllScores(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

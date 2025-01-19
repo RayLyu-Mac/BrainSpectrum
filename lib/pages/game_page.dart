@@ -116,7 +116,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       difficulty: widget.difficulty,
       timestamp: DateTime.now(),
     );
-    DatabaseHelper.instance.insertScore(gameScore);
+    DatabaseHelper().insertScore(gameScore);
 
     showDialog(
       context: context,
