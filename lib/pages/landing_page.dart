@@ -72,8 +72,8 @@ class _LandingPageState extends State<LandingPage> {
 
                     Text(
                       languageController.getText(
-                        'Color Memory Game',
-                        '颜色记忆游戏',
+                        'Brain Spectrum',
+                        '脑力光谱',
                       ),
                       style: const TextStyle(
                         fontSize: 42,
@@ -226,9 +226,10 @@ class _LandingPageState extends State<LandingPage> {
                     // History Button
                     ClayContainer(
                       depth: 20,
-                      spread: 2,
+                      spread: 4,
                       borderRadius: 16,
                       color: Colors.white,
+                      emboss: false,
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -250,6 +251,15 @@ class _LandingPageState extends State<LandingPage> {
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Theme.of(context)
+                                    .primaryColor
+                                    .withOpacity(0.3),
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                             alignment: Alignment.center,
                             child: Text(
                               languageController.getText(
@@ -286,7 +296,15 @@ class _LandingPageState extends State<LandingPage> {
                     ),
                   ],
                 ),
-                child: ElevatedButton(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.language, size: 20),
+                  label: Text(
+                    languageController.getText('EN', '中文'),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Theme.of(context).primaryColor,
@@ -301,13 +319,19 @@ class _LandingPageState extends State<LandingPage> {
                   onPressed: () {
                     languageController.toggleLanguage();
                   },
-                  child: Text(
-                    languageController.getText('EN', '中文'),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                ),
+              ),
+            ),
+
+            // Version Banner
+            Positioned(
+              bottom: 8,
+              right: 8,
+              child: Text(
+                'v1.0.1',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white.withOpacity(0.7),
                 ),
               ),
             ),

@@ -317,8 +317,12 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            _timer.cancel();
-            Navigator.pop(context);
+            if (_timer.isActive) {
+              _timer.cancel();
+            }
+            if (mounted) {
+              Navigator.of(context).pop();
+            }
           },
         ),
         bottom: PreferredSize(
@@ -334,22 +338,27 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       ),
       body: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
+            SizedBox(height: MediaQuery.of(context).size.height * 0.02),
             Card(
-              elevation: 5,
+              elevation: 10,
+              margin: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(context).size.width * 0.1,
+              ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(18),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 30,
+                padding: EdgeInsets.symmetric(
+                  horizontal: MediaQuery.of(context).size.width * 0.05,
+                  vertical: MediaQuery.of(context).size.height * 0.02,
                 ),
                 child: RichText(
                   text: TextSpan(
-                    style: const TextStyle(
-                      fontSize: 28,
+                    style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width * 0.05,
+                      fontWeight: FontWeight.bold,
                       color: Colors.black,
                     ),
                     children: [
@@ -363,7 +372,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                         style: TextStyle(
                           color: questionColor,
                           fontWeight: FontWeight.bold,
-                          fontSize: 32,
+                          fontSize: 34,
                         ),
                       ),
                     ],
@@ -371,95 +380,102 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            GridView.count(
-              shrinkWrap: true,
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: widget.difficulty >= 3 ? 1.1 : 0.65,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              children: List.generate(
-                widget.difficulty >= 3 ? 6 : 4,
-                (index) => ElevatedButton(
-                  style: _getButtonStyle(currentOptions[index], index),
-                  onPressed: () {
-                    if (currentOptions[index] == correctAnswer) {
-                      setState(() {
-                        score++;
-                        _scoreController.forward(from: 0);
-                        _generateNewQuestion();
-                      });
-                      ScaffoldMessenger.of(context)
-                        ..removeCurrentSnackBar()
-                        ..showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              languageController.getText(
-                                'Correct!',
-                                '正确！',
+            SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+            Expanded(
+              child: GridView.count(
+                shrinkWrap: true,
+                crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: widget.difficulty >= 3
+                    ? (MediaQuery.of(context).size.width > 600 ? 1.5 : 1.1)
+                    : (MediaQuery.of(context).size.width > 600 ? 1.2 : 0.65),
+                padding: EdgeInsets.symmetric(
+                  horizontal: MediaQuery.of(context).size.width * 0.03,
+                ),
+                children: List.generate(
+                  widget.difficulty >= 3 ? 6 : 4,
+                  (index) => ElevatedButton(
+                    style: _getButtonStyle(currentOptions[index], index),
+                    onPressed: () {
+                      if (currentOptions[index] == correctAnswer) {
+                        setState(() {
+                          score++;
+                          _scoreController.forward(from: 0);
+                          _generateNewQuestion();
+                        });
+                        ScaffoldMessenger.of(context)
+                          ..removeCurrentSnackBar()
+                          ..showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                languageController.getText(
+                                  'Correct!',
+                                  '正确！',
+                                ),
                               ),
+                              backgroundColor: Colors.green,
+                              duration: const Duration(milliseconds: 300),
+                              behavior: SnackBarBehavior.floating,
+                              dismissDirection: DismissDirection.horizontal,
                             ),
-                            backgroundColor: Colors.green,
-                            duration: const Duration(milliseconds: 300),
-                            behavior: SnackBarBehavior.floating,
-                            dismissDirection: DismissDirection.horizontal,
-                          ),
-                        );
-                    } else {
-                      setState(() {
-                        score = (score - 2).clamp(0, double.infinity).toInt();
-                        strikes++;
-                        if (strikes >= maxStrikes) {
-                          _timer.cancel();
-                          _showGameOverDialog();
-                        }
-                      });
-                      ScaffoldMessenger.of(context)
-                        ..removeCurrentSnackBar()
-                        ..showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              languageController.getText(
-                                'Wrong answer! -2 points (Strike ${strikes}/${maxStrikes})',
-                                '答错了！扣2分 (失误 ${strikes}/${maxStrikes})',
+                          );
+                      } else {
+                        setState(() {
+                          score = (score - 2).clamp(0, double.infinity).toInt();
+                          strikes++;
+                          if (strikes >= maxStrikes) {
+                            _timer.cancel();
+                            _showGameOverDialog();
+                          }
+                        });
+                        ScaffoldMessenger.of(context)
+                          ..removeCurrentSnackBar()
+                          ..showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                languageController.getText(
+                                  'Wrong answer! -2 points (Strike ${strikes}/${maxStrikes})',
+                                  '答错了！扣2分 (失误 ${strikes}/${maxStrikes})',
+                                ),
                               ),
+                              backgroundColor: Colors.red,
+                              duration: const Duration(milliseconds: 300),
+                              behavior: SnackBarBehavior.floating,
+                              dismissDirection: DismissDirection.horizontal,
                             ),
-                            backgroundColor: Colors.red,
-                            duration: const Duration(milliseconds: 300),
-                            behavior: SnackBarBehavior.floating,
-                            dismissDirection: DismissDirection.horizontal,
-                          ),
-                        );
-                    }
-                  },
-                  child: Text(
-                    widget.difficulty == 1
-                        ? ''
-                        : languageController.getText(
-                            currentOptions[index],
-                            colorTranslations[currentOptions[index]]!,
-                          ),
-                    style: TextStyle(
-                      color: widget.difficulty == 1
-                          ? (allColors[allColorNames
-                                      .indexOf(currentOptions[index])] ==
-                                  const Color.fromARGB(255, 255, 234, 0)
-                              ? Colors.black
-                              : Colors.white)
-                          : widget.difficulty == 2
-                              ? allColors[
-                                  allColorNames.indexOf(currentOptions[index])]
-                              : widget.difficulty == 4
-                                  ? Colors.white
-                                  : null,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 34,
+                          );
+                      }
+                    },
+                    child: Text(
+                      widget.difficulty == 1
+                          ? ''
+                          : languageController.getText(
+                              currentOptions[index],
+                              colorTranslations[currentOptions[index]]!,
+                            ),
+                      style: TextStyle(
+                        color: widget.difficulty == 1
+                            ? (allColors[allColorNames
+                                        .indexOf(currentOptions[index])] ==
+                                    const Color.fromARGB(255, 255, 234, 0)
+                                ? Colors.black
+                                : Colors.white)
+                            : widget.difficulty == 2
+                                ? allColors[allColorNames
+                                    .indexOf(currentOptions[index])]
+                                : widget.difficulty == 4
+                                    ? Colors.white
+                                    : null,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 34,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.02),
           ],
         ),
       ),
